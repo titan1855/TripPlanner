@@ -90,8 +90,9 @@ export function DateField({
                 accentColor={COLORS.primary}
                 minimumDate={minimumDate ? parseDate(minimumDate) : undefined}
                 onChange={handleChange}
+                style={styles.picker}
               />
-              <Button title="完成" onPress={closeIOS} />
+              <Button title="完成" onPress={closeIOS} style={styles.doneButton} />
             </Pressable>
           </Pressable>
         </Modal>
@@ -127,11 +128,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'center',
-    padding: 24,
+    padding: 12,
   },
   sheet: {
     backgroundColor: COLORS.card,
     borderRadius: 16,
-    padding: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    alignItems: 'center',
   },
+  // iOS inline 日曆原生寬度約 320pt，窄於此內容會向右偏移
+  picker: { width: 320, alignSelf: 'center' },
+  doneButton: { alignSelf: 'stretch', marginHorizontal: 8, marginTop: 4 },
 });
