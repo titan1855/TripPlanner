@@ -88,8 +88,12 @@ export default function TripDashboardScreen() {
     }
   }
 
-  function comingSoon(phase: string) {
-    Alert.alert('開發中', `這個功能在 ${phase} 推出`);
+  function openQuickEntry(key: string) {
+    if (key === 'pocket') {
+      router.push(`/trip/${id}/pocket`);
+    } else {
+      Alert.alert('開發中', '這個功能在 Phase 3 推出');
+    }
   }
 
   if (!trip) {
@@ -152,9 +156,7 @@ export default function TripDashboardScreen() {
             <Pressable
               key={entry.key}
               style={styles.quickItem}
-              onPress={() =>
-                comingSoon(entry.key === 'pocket' ? 'Phase 2' : 'Phase 3')
-              }
+              onPress={() => openQuickEntry(entry.key)}
             >
               <View>
                 <Text style={styles.quickEmoji}>{entry.emoji}</Text>
@@ -175,7 +177,12 @@ export default function TripDashboardScreen() {
             key={day.id}
             day={day}
             accommodationName={accommodationForDate(accommodations, day.date)?.name}
-            onPress={() => comingSoon('Phase 2（分天排程）')}
+            onPress={() =>
+              router.push({
+                pathname: `/trip/${id}/schedule`,
+                params: { day: day.id },
+              })
+            }
           />
         ))}
       </ScrollView>
