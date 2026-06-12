@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { appAlert, appConfirm } from '../../src/lib/dialog';
 import { Button } from '../../src/components/ui/Button';
 import { Card } from '../../src/components/ui/Card';
 import { useAuth } from '../../src/hooks/useAuth';
@@ -11,24 +12,17 @@ export default function ProfileScreen() {
   const signOut = useAuthStore((s) => s.signOut);
   const [loading, setLoading] = useState(false);
 
-  function confirmSignOut() {
-    Alert.alert('登出', '確定要登出嗎？', [
-      { text: '取消', style: 'cancel' },
-      {
-        text: '登出',
-        style: 'destructive',
-        onPress: async () => {
-          setLoading(true);
-          try {
-            await signOut();
-          } catch (e: any) {
-            Alert.alert('登出失敗', e.message ?? '請稍後再試');
-          } finally {
-            setLoading(false);
-          }
-        },
-      },
-    ]);
+  async function confirmSignOut() {
+    const ok = await appConfirm('登出', '確定要登出嗎？', '登出', true);
+    if (!ok) return;
+    setLoading(true);
+    try {
+      await signOut();
+    } catch (e: any) {
+      appAlert('登出失敗', e.message ?? '請稍後再試');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

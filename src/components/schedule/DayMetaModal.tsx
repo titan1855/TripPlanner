@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Alert,
   Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
 } from 'react-native';
+import { appAlert } from '../../lib/dialog';
 import { updateDay } from '../../services/days';
 import type { TripDay } from '../../types/database';
 import { COLORS } from '../../utils/constants';
@@ -48,7 +48,7 @@ export function DayMetaModal({ day, onSaved, onClose }: Props) {
       });
       onSaved(updated);
     } catch (e: any) {
-      Alert.alert('儲存失敗', e.message ?? '請稍後再試');
+      appAlert('儲存失敗', e.message ?? '請稍後再試');
     } finally {
       setLoading(false);
     }

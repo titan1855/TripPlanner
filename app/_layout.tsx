@@ -1,7 +1,6 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import React, { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAuthStore } from '../src/store/auth';
 import { COLORS } from '../src/utils/constants';
 
@@ -36,7 +35,7 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={styles.flex}>
+    <View style={styles.flex}>
       <Stack
         screenOptions={{
           headerTintColor: COLORS.primary,
@@ -54,7 +53,7 @@ export default function RootLayout() {
         <Stack.Screen name="trip/[id]/schedule" options={{ title: '分天排程' }} />
         <Stack.Screen name="trip/[id]/spot/[spotId]" options={{ title: '景點詳情' }} />
       </Stack>
-    </GestureHandlerRootView>
+    </View>
   );
 }
 

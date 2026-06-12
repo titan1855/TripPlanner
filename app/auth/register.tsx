@@ -1,12 +1,12 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
 } from 'react-native';
+import { appAlert } from '../../src/lib/dialog';
 import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
 import { useAuthStore } from '../../src/store/auth';
@@ -23,15 +23,15 @@ export default function RegisterScreen() {
 
   async function handleRegister() {
     if (!displayName.trim() || !email.trim() || !password) {
-      Alert.alert('請填寫所有欄位');
+      appAlert('請填寫所有欄位');
       return;
     }
     if (password.length < 6) {
-      Alert.alert('密碼至少需要 6 個字元');
+      appAlert('密碼至少需要 6 個字元');
       return;
     }
     if (password !== confirm) {
-      Alert.alert('兩次輸入的密碼不一致');
+      appAlert('兩次輸入的密碼不一致');
       return;
     }
     setLoading(true);
@@ -39,24 +39,18 @@ export default function RegisterScreen() {
       const hasSession = await signUp(email.trim(), password, displayName.trim());
       if (!hasSession) {
         // 需要 email 驗證 → 跳回登入頁（帶入 email），驗證完直接登入
-        Alert.alert(
+        appAlert(
           '驗證信已寄出 📮',
-          `請到 ${email.trim()} 收信並點擊驗證連結，完成後回來輸入密碼登入。`,
-          [
-            {
-              text: '好',
-              onPress: () =>
-                router.replace({
-                  pathname: '/auth/login',
-                  params: { email: email.trim() },
-                }),
-            },
-          ]
+          `請到 ${email.trim()} 收信並點擊驗證連結，完成後回來輸入密碼登入。`
         );
+        router.replace({
+          pathname: '/auth/login',
+          params: { email: email.trim() },
+        });
       }
       // 有 session 的話 root layout 的 auth guard 會自動導向首頁
     } catch (e: any) {
-      Alert.alert('註冊失敗', e.message ?? '請稍後再試');
+      appAlert('註冊失敗', e.message ?? '請稍後再試');
     } finally {
       setLoading(false);
     }

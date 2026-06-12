@@ -2,13 +2,13 @@ import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-rou
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { appAlert } from '../../../src/lib/dialog';
 import { DayOverviewRow } from '../../../src/components/trip/DayOverviewRow';
 import { Badge } from '../../../src/components/ui/Badge';
 import { Card } from '../../../src/components/ui/Card';
@@ -67,7 +67,7 @@ export default function TripDashboardScreen() {
       setTicketAlertCount(tickets);
       setChecklistAlertCount(checklist);
     } catch (e: any) {
-      Alert.alert('載入失敗', e.message ?? '請稍後再試');
+      appAlert('載入失敗', e.message ?? '請稍後再試');
     }
   }, [id]);
 
@@ -84,7 +84,7 @@ export default function TripDashboardScreen() {
     try {
       setTrip(await updateTrip(trip.id, { status: next }));
     } catch (e: any) {
-      Alert.alert('更新失敗', e.message ?? '請稍後再試');
+      appAlert('更新失敗', e.message ?? '請稍後再試');
     }
   }
 
@@ -92,7 +92,7 @@ export default function TripDashboardScreen() {
     if (key === 'pocket') {
       router.push(`/trip/${id}/pocket`);
     } else {
-      Alert.alert('開發中', '這個功能在 Phase 3 推出');
+      appAlert('開發中', '這個功能在 Phase 3 推出');
     }
   }
 

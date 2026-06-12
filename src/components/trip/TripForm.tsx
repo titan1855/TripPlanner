@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text } from 'react-native';
+import { ScrollView, StyleSheet, Text } from 'react-native';
+import { appAlert } from '../../lib/dialog';
 import type { Trip } from '../../types/database';
 import { COLORS } from '../../utils/constants';
 import { eachDateOfRange, tripDayCount } from '../../utils/date';
@@ -39,19 +40,19 @@ export function TripForm({ initial, submitTitle, onSubmit }: Props) {
 
   async function handleSubmit() {
     if (!title.trim()) {
-      Alert.alert('請輸入行程標題');
+      appAlert('請輸入行程標題');
       return;
     }
     if (!startDate || !endDate) {
-      Alert.alert('請選擇出發日與回程日');
+      appAlert('請選擇出發日與回程日');
       return;
     }
     if (startDate > endDate) {
-      Alert.alert('回程日不可早於出發日');
+      appAlert('回程日不可早於出發日');
       return;
     }
     if (eachDateOfRange(startDate, endDate).length > 60) {
-      Alert.alert('行程過長', '單一行程最多 60 天');
+      appAlert('行程過長', '單一行程最多 60 天');
       return;
     }
     setLoading(true);
@@ -64,7 +65,7 @@ export function TripForm({ initial, submitTitle, onSubmit }: Props) {
         key_reminders: keyReminders.trim() || null,
       });
     } catch (e: any) {
-      Alert.alert('儲存失敗', e.message ?? '請稍後再試');
+      appAlert('儲存失敗', e.message ?? '請稍後再試');
     } finally {
       setLoading(false);
     }

@@ -8,28 +8,15 @@ interface Props {
   spots: Spot[];
   onPressSpot: (spot: Spot) => void;
   onChoose: (spot: Spot) => void;
-  onLongPress?: () => void;
-  isDragging?: boolean;
 }
 
 /** 同 alternative_group 的候選方案組：堆疊顯示「N 選 1」，展開比較與選定 */
-export function AlternativeStack({
-  spots,
-  onPressSpot,
-  onChoose,
-  onLongPress,
-  isDragging,
-}: Props) {
+export function AlternativeStack({ spots, onPressSpot, onChoose }: Props) {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <View style={[styles.container, isDragging && styles.dragging]}>
-      <Pressable
-        style={styles.header}
-        onPress={() => setExpanded(!expanded)}
-        onLongPress={onLongPress}
-        delayLongPress={200}
-      >
+    <View style={styles.container}>
+      <Pressable style={styles.header} onPress={() => setExpanded(!expanded)}>
         <Text style={styles.headerText}>
           🔀 候選方案 {spots.length} 選 1
         </Text>
@@ -76,7 +63,6 @@ const styles = StyleSheet.create({
     padding: 8,
     backgroundColor: `${COLORS.warning}0A`,
   },
-  dragging: { transform: [{ scale: 1.02 }] },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',

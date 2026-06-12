@@ -1,12 +1,12 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { appAlert } from '../../../src/lib/dialog';
 import { DayPickerModal } from '../../../src/components/schedule/DayPickerModal';
 import { PocketItem } from '../../../src/components/pocket/PocketItem';
 import { QuickAddBar } from '../../../src/components/pocket/QuickAddBar';
@@ -46,7 +46,7 @@ export default function PocketScreen() {
       setSpots(allSpots.filter((s) => s.trip_day_id === null));
       setDays(allDays);
     } catch (e: any) {
-      Alert.alert('載入失敗', e.message ?? '請稍後再試');
+      appAlert('載入失敗', e.message ?? '請稍後再試');
     }
   }, [id]);
 
@@ -61,7 +61,7 @@ export default function PocketScreen() {
       await createSpot({ trip_id: id, name });
       await load();
     } catch (e: any) {
-      Alert.alert('新增失敗', e.message ?? '請稍後再試');
+      appAlert('新增失敗', e.message ?? '請稍後再試');
     }
   }
 
@@ -72,7 +72,7 @@ export default function PocketScreen() {
       setAssigning(null);
       await load();
     } catch (e: any) {
-      Alert.alert('指派失敗', e.message ?? '請稍後再試');
+      appAlert('指派失敗', e.message ?? '請稍後再試');
     }
   }
 

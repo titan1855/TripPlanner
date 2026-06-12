@@ -1,4 +1,3 @@
-import * as Crypto from 'expo-crypto';
 import { supabase } from '../lib/supabase';
 import type { Spot } from '../types/database';
 import type { SpotCategory, SpotPriority } from '../types/enums';
@@ -110,7 +109,8 @@ export async function assignAsAlternatives(
   spotIds: string[],
   dayId: string
 ): Promise<void> {
-  const group = Crypto.randomUUID();
+  // PWA 在 https/localhost 下必有 crypto.randomUUID
+  const group = globalThis.crypto.randomUUID();
   const base = await nextSortOrder(dayId);
   await Promise.all(
     spotIds.map((id, i) =>

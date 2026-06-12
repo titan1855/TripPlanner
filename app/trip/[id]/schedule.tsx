@@ -1,9 +1,6 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import DraggableFlatList, {
-  type RenderItemParams,
-} from 'react-native-draggable-flatlist';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { AlternativeStack } from '../../../src/components/schedule/AlternativeStack';
 import { DayMetaModal } from '../../../src/components/schedule/DayMetaModal';
 import { PocketDrawer } from '../../../src/components/schedule/PocketDrawer';
@@ -15,6 +12,7 @@ import {
 import { DayTabs } from '../../../src/components/trip/DayTabs';
 import { Button } from '../../../src/components/ui/Button';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { appAlert, appConfirm } from '../../../src/lib/dialog';
 import { listDays } from '../../../src/services/days';
 import {
   assignAsAlternatives,
@@ -74,7 +72,7 @@ export default function ScheduleScreen() {
         return allDays[0]?.id ?? null;
       });
     } catch (e: any) {
-      Alert.alert('載入失敗', e.message ?? '請稍後再試');
+      appAlert('載入失敗', e.message ?? '請稍後再試');
     }
   }, [id]);
 
@@ -94,8 +92,8 @@ export default function ScheduleScreen() {
     return buildListItems(daySpots);
   }, [spots, activeDayId]);
 
-  async function handleDragEnd({ data }: { data: ListItem[] }) {
-    const ids = flattenToIds(data);
+  async function persistOrder(items: ListItem[]) {
+    const ids = flattenToIds(items);
     // 樂觀更新本地排序
     setSpots((prev) =>
       prev.map((s) => {
@@ -106,9 +104,17 @@ export default function ScheduleScreen() {
     try {
       await reorderDay(ids);
     } catch (e: any) {
-      Alert.alert('排序儲存失敗', e.message ?? '請稍後再試');
+      appAlert('排序儲存失敗', e.message ?? '請稍後再試');
       await load();
     }
+  }
+
+  function handleMove(index: number, direction: -1 | 1) {
+    const target = index + direction;
+    if (target < 0 || target >= listItems.length) return;
+    const next = [...listItems];
+    [next[index], next[target]] = [next[target], next[index]];
+    persistOrder(next);
   }
 
   async function handleAddOne(spot: Spot) {
@@ -117,7 +123,7 @@ export default function ScheduleScreen() {
       await assignToDay(spot.id, activeDayId);
       await load();
     } catch (e: any) {
-      Alert.alert('加入失敗', e.message ?? '請稍後再試');
+      appAlert('加入失敗', e.message ?? '請稍後再試');
     }
   }
 
@@ -131,50 +137,70 @@ export default function ScheduleScreen() {
       );
       await load();
     } catch (e: any) {
-      Alert.alert('加入失敗', e.message ?? '請稍後再試');
+      appAlert('加入失敗', e.message ?? '請稍後再試');
     }
   }
 
-  function handleChoose(spot: Spot) {
-    Alert.alert('選定方案', `確定選「${spot.name}」？其餘候選會退回口袋名單。`, [
-      { text: '取消', style: 'cancel' },
-      {
-        text: '選定',
-        onPress: async () => {
-          try {
-            await chooseAlternative(spot);
-            await load();
-          } catch (e: any) {
-            Alert.alert('操作失敗', e.message ?? '請稍後再試');
-          }
-        },
-      },
-    ]);
+  async function handleChoose(spot: Spot) {
+    const ok = await appConfirm(
+      '選定方案',
+      `確定選「${spot.name}」？其餘候選會退回口袋名單。`,
+      '選定'
+    );
+    if (!ok) return;
+    try {
+      await chooseAlternative(spot);
+      await load();
+    } catch (e: any) {
+      appAlert('操作失敗', e.message ?? '請稍後再試');
+    }
   }
 
   const openSpot = (spot: Spot) => router.push(`/trip/${id}/spot/${spot.id}`);
 
-  function renderItem({ item, drag, isActive, getIndex }: RenderItemParams<ListItem>) {
-    const index = getIndex() ?? 0;
+  function renderItem({ item, index }: { item: ListItem; index: number }) {
     const isLast = index === listItems.length - 1;
     return (
       <View style={styles.itemWrap}>
-        {item.type === 'single' ? (
-          <SpotCard
-            spot={item.spot}
-            onPress={() => openSpot(item.spot)}
-            onLongPress={drag}
-            isDragging={isActive}
-          />
-        ) : (
-          <AlternativeStack
-            spots={item.spots}
-            onPressSpot={openSpot}
-            onChoose={handleChoose}
-            onLongPress={drag}
-            isDragging={isActive}
-          />
-        )}
+        <View style={styles.itemRow}>
+          <View style={styles.itemContent}>
+            {item.type === 'single' ? (
+              <SpotCard spot={item.spot} onPress={() => openSpot(item.spot)} />
+            ) : (
+              <AlternativeStack
+                spots={item.spots}
+                onPressSpot={openSpot}
+                onChoose={handleChoose}
+              />
+            )}
+          </View>
+          <View style={styles.moveColumn}>
+            <Pressable
+              onPress={() => handleMove(index, -1)}
+              disabled={index === 0}
+              style={({ pressed }) => [
+                styles.moveButton,
+                index === 0 && styles.moveDisabled,
+                pressed && styles.movePressed,
+              ]}
+              hitSlop={4}
+            >
+              <Text style={styles.moveText}>▲</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => handleMove(index, 1)}
+              disabled={isLast}
+              style={({ pressed }) => [
+                styles.moveButton,
+                isLast && styles.moveDisabled,
+                pressed && styles.movePressed,
+              ]}
+              hitSlop={4}
+            >
+              <Text style={styles.moveText}>▼</Text>
+            </Pressable>
+          </View>
+        </View>
         {!isLast && item.type === 'single' ? (
           hasTransportInfo(item.spot) ? (
             <TransportBar spot={item.spot} onPress={() => openSpot(item.spot)} />
@@ -216,14 +242,12 @@ export default function ScheduleScreen() {
           onAction={() => setDrawerOpen(true)}
         />
       ) : (
-        <DraggableFlatList
+        <FlatList
           data={listItems}
           keyExtractor={(item) => item.key}
           renderItem={renderItem}
-          onDragEnd={handleDragEnd}
-          containerStyle={styles.listContainer}
+          style={styles.list}
           contentContainerStyle={styles.listContent}
-          activationDistance={8}
         />
       )}
 
@@ -269,9 +293,25 @@ const styles = StyleSheet.create({
   dayMetaText: { flex: 1, fontSize: 13, color: COLORS.textSecondary },
   dayHighlight: { fontSize: 12, color: COLORS.warning },
   dayMetaEdit: { fontSize: 14 },
-  listContainer: { flex: 1 },
+  list: { flex: 1 },
   listContent: { padding: 16, paddingBottom: 24 },
   itemWrap: { marginBottom: 4 },
+  itemRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  itemContent: { flex: 1 },
+  moveColumn: { gap: 6 },
+  moveButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  moveDisabled: { opacity: 0.25 },
+  movePressed: { backgroundColor: `${COLORS.primary}14` },
+  moveText: { fontSize: 13, color: COLORS.primary },
   addTransport: { paddingLeft: 18, paddingVertical: 4 },
   addTransportText: { fontSize: 12, color: COLORS.border },
   stackGap: { height: 8 },

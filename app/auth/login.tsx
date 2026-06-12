@@ -1,12 +1,12 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
 } from 'react-native';
+import { appAlert } from '../../src/lib/dialog';
 import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
 import { useAuthStore } from '../../src/store/auth';
@@ -22,7 +22,7 @@ export default function LoginScreen() {
 
   async function handleLogin() {
     if (!email.trim() || !password) {
-      Alert.alert('請輸入 Email 與密碼');
+      appAlert('請輸入 Email 與密碼');
       return;
     }
     setLoading(true);
@@ -30,7 +30,7 @@ export default function LoginScreen() {
       await signIn(email.trim(), password);
       // 登入成功後由 root layout 的 auth guard 自動導向
     } catch (e: any) {
-      Alert.alert('登入失敗', e.message ?? '請稍後再試');
+      appAlert('登入失敗', e.message ?? '請稍後再試');
     } finally {
       setLoading(false);
     }

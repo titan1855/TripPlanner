@@ -1,6 +1,9 @@
-import { Linking, Platform } from 'react-native';
+import { Linking } from 'react-native';
 
-/** 用名稱或地址開啟 Google Maps 導航（不串任何 API），優先地址 */
+/**
+ * 用名稱或地址開啟 Google Maps 導航（universal link，不串 API）。
+ * 手機上裝有 Google Maps APP 會自動喚起，沒裝開網頁版，桌面開新分頁。
+ */
 export function openGoogleMapsNavigation(
   spot: { name: string; address?: string | null },
   destinationHint?: string
@@ -8,13 +11,5 @@ export function openGoogleMapsNavigation(
   const query = encodeURIComponent(
     spot.address || `${spot.name} ${destinationHint ?? ''}`.trim()
   );
-  const appUrl = Platform.select({
-    ios: `comgooglemaps://?daddr=${query}`,
-    android: `google.navigation:q=${query}`,
-  })!;
-  const webUrl = `https://www.google.com/maps/dir/?api=1&destination=${query}`;
-
-  Linking.canOpenURL(appUrl)
-    .then((ok) => Linking.openURL(ok ? appUrl : webUrl))
-    .catch(() => Linking.openURL(webUrl));
+  Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${query}`);
 }

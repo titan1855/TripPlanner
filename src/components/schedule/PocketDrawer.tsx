@@ -51,8 +51,9 @@ export function PocketDrawer({
   const [priorityFilter, setPriorityFilter] = useState<SpotPriority | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<SpotCategory | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [multiOn, setMultiOn] = useState(false);
 
-  const multiMode = selected.size > 0;
+  const multiMode = multiOn || selected.size > 0;
 
   const filtered = pocketSpots.filter(
     (s) =>
@@ -69,12 +70,14 @@ export function PocketDrawer({
 
   function handleClose() {
     setSelected(new Set());
+    setMultiOn(false);
     onClose();
   }
 
   function handleAddAlternatives() {
     const spots = pocketSpots.filter((s) => selected.has(s.id));
     setSelected(new Set());
+    setMultiOn(false);
     onAddAlternatives(spots);
   }
 
@@ -82,9 +85,28 @@ export function PocketDrawer({
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
       <Pressable style={styles.backdrop} onPress={handleClose}>
         <Pressable style={styles.sheet} onPress={() => {}}>
-          <Text style={styles.title}>從口袋名單加入 {dayLabel}</Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>從口袋名單加入 {dayLabel}</Text>
+            <Pressable
+              style={[styles.multiToggle, multiMode && styles.multiToggleOn]}
+              onPress={() => {
+                if (multiMode) {
+                  setSelected(new Set());
+                  setMultiOn(false);
+                } else {
+                  setMultiOn(true);
+                }
+              }}
+            >
+              <Text style={[styles.multiToggleText, multiMode && styles.multiToggleTextOn]}>
+                {multiMode ? '取消多選' : '☑️ 多選'}
+              </Text>
+            </Pressable>
+          </View>
           <Text style={styles.hint}>
-            點一下直接加入；長按可多選，把幾個地點綁成「候選方案組」
+            {multiMode
+              ? '勾選 2 個以上，加入為「候選方案組（N 選 1）」'
+              : '點一下直接加入；按「多選」可把幾個地點綁成候選方案組'}
           </Text>
 
           <View style={styles.filters}>
@@ -181,12 +203,23 @@ const styles = StyleSheet.create({
     maxHeight: '80%',
     minHeight: '50%',
   },
-  title: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: COLORS.text,
-    textAlign: 'center',
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
+  title: { fontSize: 17, fontWeight: '700', color: COLORS.text },
+  multiToggle: {
+    paddingHorizontal: 10,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    justifyContent: 'center',
+  },
+  multiToggleOn: { borderColor: COLORS.primary, backgroundColor: `${COLORS.primary}14` },
+  multiToggleText: { fontSize: 13, color: COLORS.textSecondary },
+  multiToggleTextOn: { color: COLORS.primary, fontWeight: '600' },
   hint: {
     fontSize: 12,
     color: COLORS.textSecondary,

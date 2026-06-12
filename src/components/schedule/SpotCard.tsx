@@ -14,11 +14,9 @@ import { Badge } from '../ui/Badge';
 interface Props {
   spot: Spot;
   onPress: () => void;
-  onLongPress?: () => void;
-  isDragging?: boolean;
 }
 
-export function SpotCard({ spot, onPress, onLongPress, isDragging }: Props) {
+export function SpotCard({ spot, onPress }: Props) {
   const arrival = formatTime(spot.arrival_time);
   const departure = formatTime(spot.departure_time);
   const timeLabel =
@@ -27,13 +25,7 @@ export function SpotCard({ spot, onPress, onLongPress, isDragging }: Props) {
   return (
     <Pressable
       onPress={onPress}
-      onLongPress={onLongPress}
-      delayLongPress={200}
-      style={({ pressed }) => [
-        styles.card,
-        pressed && styles.pressed,
-        isDragging && styles.dragging,
-      ]}
+      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
       <View style={[styles.priorityBar, { backgroundColor: PRIORITY_COLOR[spot.priority] }]} />
       <View style={styles.body}>
@@ -83,12 +75,6 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   pressed: { opacity: 0.85 },
-  dragging: {
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 8,
-    transform: [{ scale: 1.02 }],
-  },
   priorityBar: { width: 4 },
   body: { flex: 1, padding: 12 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },

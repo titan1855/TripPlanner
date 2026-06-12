@@ -2,12 +2,12 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { appAlert, appConfirm } from '../../../../src/lib/dialog';
 import { DayPickerModal } from '../../../../src/components/schedule/DayPickerModal';
 import { Button } from '../../../../src/components/ui/Button';
 import { Chips } from '../../../../src/components/ui/Chips';
@@ -140,7 +140,7 @@ export default function SpotDetailScreen() {
         );
         setTNotes(s.transport_notes ?? '');
       } catch (e: any) {
-        Alert.alert('載入失敗', e.message ?? '請稍後再試');
+        appAlert('載入失敗', e.message ?? '請稍後再試');
       }
     })();
   }, [spotId, id]);
@@ -153,7 +153,7 @@ export default function SpotDetailScreen() {
   async function handleSave() {
     if (!spot) return;
     if (!name.trim()) {
-      Alert.alert('請輸入景點名稱');
+      appAlert('請輸入景點名稱');
       return;
     }
     setSaving(true);
@@ -184,7 +184,7 @@ export default function SpotDetailScreen() {
       });
       router.back();
     } catch (e: any) {
-      Alert.alert('儲存失敗', e.message ?? '請稍後再試');
+      appAlert('儲存失敗', e.message ?? '請稍後再試');
     } finally {
       setSaving(false);
     }
@@ -197,45 +197,36 @@ export default function SpotDetailScreen() {
       await assignToDay(spot.id, day.id);
       router.back();
     } catch (e: any) {
-      Alert.alert('指派失敗', e.message ?? '請稍後再試');
+      appAlert('指派失敗', e.message ?? '請稍後再試');
     }
   }
 
-  function handleBackToPocket() {
+  async function handleBackToPocket() {
     if (!spot) return;
-    Alert.alert('退回口袋名單', `「${spot.name}」會從排程移除，回到口袋名單。`, [
-      { text: '取消', style: 'cancel' },
-      {
-        text: '退回',
-        onPress: async () => {
-          try {
-            await backToPocket(spot.id);
-            router.back();
-          } catch (e: any) {
-            Alert.alert('操作失敗', e.message ?? '請稍後再試');
-          }
-        },
-      },
-    ]);
+    const ok = await appConfirm(
+      '退回口袋名單',
+      `「${spot.name}」會從排程移除，回到口袋名單。`,
+      '退回'
+    );
+    if (!ok) return;
+    try {
+      await backToPocket(spot.id);
+      router.back();
+    } catch (e: any) {
+      appAlert('操作失敗', e.message ?? '請稍後再試');
+    }
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!spot) return;
-    Alert.alert('刪除景點', `確定刪除「${spot.name}」？`, [
-      { text: '取消', style: 'cancel' },
-      {
-        text: '刪除',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteSpot(spot.id);
-            router.back();
-          } catch (e: any) {
-            Alert.alert('刪除失敗', e.message ?? '請稍後再試');
-          }
-        },
-      },
-    ]);
+    const ok = await appConfirm('刪除景點', `確定刪除「${spot.name}」？`, '刪除', true);
+    if (!ok) return;
+    try {
+      await deleteSpot(spot.id);
+      router.back();
+    } catch (e: any) {
+      appAlert('刪除失敗', e.message ?? '請稍後再試');
+    }
   }
 
   if (!spot) {
