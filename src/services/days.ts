@@ -12,6 +12,21 @@ export async function listDays(tripId: string): Promise<TripDay[]> {
   return data ?? [];
 }
 
+/** 更新某天的概要資訊（主要區域 / 今日重點 / 備案 / 備忘） */
+export async function updateDay(
+  id: string,
+  patch: Partial<Pick<TripDay, 'area_summary' | 'highlight' | 'plan_b' | 'memo'>>
+): Promise<TripDay> {
+  const { data, error } = await supabase
+    .from('trip_days')
+    .update(patch)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 /** 建立行程時依日期區間產生所有 trip_days */
 export async function createDaysForRange(
   tripId: string,

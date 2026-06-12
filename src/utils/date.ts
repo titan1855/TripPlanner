@@ -52,3 +52,9 @@ export function daysUntil(startISO: string): number {
   const ms = parseDate(startISO).getTime() - parseDate(todayISO()).getTime();
   return Math.round(ms / 86_400_000);
 }
+
+/** '09:30:00' 或 '09:30' → '09:30'；null → '' */
+export function formatTime(time: string | null | undefined): string {
+  if (!time) return '';
+  return time.slice(0, 5);
+}
