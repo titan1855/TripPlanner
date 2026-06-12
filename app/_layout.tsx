@@ -1,6 +1,7 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import React, { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAuthStore } from '../src/store/auth';
 import { COLORS } from '../src/utils/constants';
 
@@ -35,24 +36,30 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerTintColor: COLORS.primary,
-        headerTitleStyle: { color: COLORS.text },
-        contentStyle: { backgroundColor: COLORS.background },
-      }}
-    >
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="auth/login" options={{ headerShown: false }} />
-      <Stack.Screen name="auth/register" options={{ headerShown: false }} />
-      <Stack.Screen name="trip/new" options={{ title: '建立行程', presentation: 'modal' }} />
-      <Stack.Screen name="trip/[id]/index" options={{ title: '行程總覽' }} />
-      <Stack.Screen name="trip/[id]/edit" options={{ title: '編輯行程', presentation: 'modal' }} />
-    </Stack>
+    <GestureHandlerRootView style={styles.flex}>
+      <Stack
+        screenOptions={{
+          headerTintColor: COLORS.primary,
+          headerTitleStyle: { color: COLORS.text },
+          contentStyle: { backgroundColor: COLORS.background },
+        }}
+      >
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="auth/login" options={{ headerShown: false }} />
+        <Stack.Screen name="auth/register" options={{ headerShown: false }} />
+        <Stack.Screen name="trip/new" options={{ title: '建立行程', presentation: 'modal' }} />
+        <Stack.Screen name="trip/[id]/index" options={{ title: '行程總覽' }} />
+        <Stack.Screen name="trip/[id]/edit" options={{ title: '編輯行程', presentation: 'modal' }} />
+        <Stack.Screen name="trip/[id]/pocket" options={{ title: '口袋名單' }} />
+        <Stack.Screen name="trip/[id]/schedule" options={{ title: '分天排程' }} />
+        <Stack.Screen name="trip/[id]/spot/[spotId]" options={{ title: '景點詳情' }} />
+      </Stack>
+    </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   loading: {
     flex: 1,
     alignItems: 'center',
