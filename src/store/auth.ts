@@ -9,7 +9,8 @@ interface AuthState {
   initialized: boolean;
   initialize: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, displayName: string) => Promise<void>;
+  /** 回傳是否已直接取得 session（false = 需先完成 email 驗證） */
+  signUp: (email: string, password: string, displayName: string) => Promise<boolean>;
   signOut: () => Promise<void>;
 }
 
@@ -57,12 +58,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signUp: async (email, password, displayName) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { display_name: displayName } },
     });
     if (error) throw error;
+    return !!data.session;
   },
 
   signOut: async () => {

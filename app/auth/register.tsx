@@ -2,8 +2,6 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Alert,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -38,9 +36,25 @@ export default function RegisterScreen() {
     }
     setLoading(true);
     try {
-      await signUp(email.trim(), password, displayName.trim());
-      // 若專案開啟 email 確認，這裡不會直接有 session
-      Alert.alert('註冊成功', '若未自動登入，請檢查信箱完成驗證後再登入。');
+      const hasSession = await signUp(email.trim(), password, displayName.trim());
+      if (!hasSession) {
+        // 需要 email 驗證 → 跳回登入頁（帶入 email），驗證完直接登入
+        Alert.alert(
+          '驗證信已寄出 📮',
+          `請到 ${email.trim()} 收信並點擊驗證連結，完成後回來輸入密碼登入。`,
+          [
+            {
+              text: '好',
+              onPress: () =>
+                router.replace({
+                  pathname: '/auth/login',
+                  params: { email: email.trim() },
+                }),
+            },
+          ]
+        );
+      }
+      // 有 session 的話 root layout 的 auth guard 會自動導向首頁
     } catch (e: any) {
       Alert.alert('註冊失敗', e.message ?? '請稍後再試');
     } finally {
@@ -49,53 +63,50 @@ export default function RegisterScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
+    <ScrollView
       style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+      automaticallyAdjustKeyboardInsets
     >
-      <ScrollView
-        contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text style={styles.title}>建立帳號</Text>
+      <Text style={styles.title}>建立帳號</Text>
 
-        <Input
-          label="暱稱"
-          value={displayName}
-          onChangeText={setDisplayName}
-          placeholder="旅伴會看到的名字"
-        />
-        <Input
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          placeholder="you@example.com"
-        />
-        <Input
-          label="密碼"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          placeholder="至少 6 個字元"
-        />
-        <Input
-          label="確認密碼"
-          value={confirm}
-          onChangeText={setConfirm}
-          secureTextEntry
-          placeholder="再輸入一次密碼"
-        />
-        <Button title="註冊" onPress={handleRegister} loading={loading} />
+      <Input
+        label="暱稱"
+        value={displayName}
+        onChangeText={setDisplayName}
+        placeholder="旅伴會看到的名字"
+      />
+      <Input
+        label="Email"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        keyboardType="email-address"
+        placeholder="you@example.com"
+      />
+      <Input
+        label="密碼"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        placeholder="至少 6 個字元"
+      />
+      <Input
+        label="確認密碼"
+        value={confirm}
+        onChangeText={setConfirm}
+        secureTextEntry
+        placeholder="再輸入一次密碼"
+      />
+      <Button title="註冊" onPress={handleRegister} loading={loading} />
 
-        <TouchableOpacity style={styles.link} onPress={() => router.back()}>
-          <Text style={styles.linkText}>
-            已經有帳號？<Text style={styles.linkHighlight}>回到登入</Text>
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <TouchableOpacity style={styles.link} onPress={() => router.back()}>
+        <Text style={styles.linkText}>
+          已經有帳號？<Text style={styles.linkHighlight}>回到登入</Text>
+        </Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 }
 

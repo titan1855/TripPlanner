@@ -4,6 +4,7 @@ import type { Trip } from '../../types/database';
 import { COLORS } from '../../utils/constants';
 import { eachDateOfRange, tripDayCount } from '../../utils/date';
 import { Button } from '../ui/Button';
+import { DateField } from '../ui/DateField';
 import { Input } from '../ui/Input';
 
 export interface TripFormValues {
@@ -20,8 +21,6 @@ interface Props {
   onSubmit: (values: TripFormValues) => Promise<void>;
 }
 
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-
 export function TripForm({ initial, submitTitle, onSubmit }: Props) {
   const [title, setTitle] = useState(initial?.title ?? '');
   const [destination, setDestination] = useState(initial?.destination ?? '');
@@ -30,16 +29,21 @@ export function TripForm({ initial, submitTitle, onSubmit }: Props) {
   const [keyReminders, setKeyReminders] = useState(initial?.key_reminders ?? '');
   const [loading, setLoading] = useState(false);
 
-  const validRange =
-    DATE_RE.test(startDate) && DATE_RE.test(endDate) && startDate <= endDate;
+  const validRange = !!startDate && !!endDate && startDate <= endDate;
+
+  function handleStartChange(iso: string) {
+    setStartDate(iso);
+    // 出發日晚於回程日時，自動把回程日推到同一天
+    if (endDate && endDate < iso) setEndDate(iso);
+  }
 
   async function handleSubmit() {
     if (!title.trim()) {
       Alert.alert('請輸入行程標題');
       return;
     }
-    if (!DATE_RE.test(startDate) || !DATE_RE.test(endDate)) {
-      Alert.alert('日期格式錯誤', '請用 YYYY-MM-DD，例如 2026-09-10');
+    if (!startDate || !endDate) {
+      Alert.alert('請選擇出發日與回程日');
       return;
     }
     if (startDate > endDate) {
@@ -71,6 +75,7 @@ export function TripForm({ initial, submitTitle, onSubmit }: Props) {
       style={styles.container}
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
+      automaticallyAdjustKeyboardInsets
     >
       <Input
         label="行程標題 *"
@@ -84,19 +89,12 @@ export function TripForm({ initial, submitTitle, onSubmit }: Props) {
         onChangeText={setDestination}
         placeholder="例：東京・富士・伊豆"
       />
-      <Input
-        label="出發日 *"
-        value={startDate}
-        onChangeText={setStartDate}
-        placeholder="YYYY-MM-DD"
-        autoCapitalize="none"
-      />
-      <Input
+      <DateField label="出發日 *" value={startDate} onChange={handleStartChange} />
+      <DateField
         label="回程日 *"
         value={endDate}
-        onChangeText={setEndDate}
-        placeholder="YYYY-MM-DD"
-        autoCapitalize="none"
+        onChange={setEndDate}
+        minimumDate={startDate || undefined}
       />
       {validRange ? (
         <Text style={styles.dayCount}>共 {tripDayCount(startDate, endDate)} 天</Text>

@@ -1,9 +1,7 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Alert,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,8 +14,9 @@ import { COLORS } from '../../src/utils/constants';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ email?: string }>();
   const signIn = useAuthStore((s) => s.signIn);
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(params.email ?? '');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -38,45 +37,42 @@ export default function LoginScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
+    <ScrollView
       style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+      automaticallyAdjustKeyboardInsets
     >
-      <ScrollView
-        contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
+      <Text style={styles.logo}>🧳</Text>
+      <Text style={styles.title}>TripPlanner</Text>
+      <Text style={styles.subtitle}>自助旅行神隊友</Text>
+
+      <Input
+        label="Email"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        keyboardType="email-address"
+        placeholder="you@example.com"
+      />
+      <Input
+        label="密碼"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        placeholder="••••••••"
+      />
+      <Button title="登入" onPress={handleLogin} loading={loading} />
+
+      <TouchableOpacity
+        style={styles.link}
+        onPress={() => router.push('/auth/register')}
       >
-        <Text style={styles.logo}>🧳</Text>
-        <Text style={styles.title}>TripPlanner</Text>
-        <Text style={styles.subtitle}>自助旅行神隊友</Text>
-
-        <Input
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          placeholder="you@example.com"
-        />
-        <Input
-          label="密碼"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          placeholder="••••••••"
-        />
-        <Button title="登入" onPress={handleLogin} loading={loading} />
-
-        <TouchableOpacity
-          style={styles.link}
-          onPress={() => router.push('/auth/register')}
-        >
-          <Text style={styles.linkText}>
-            還沒有帳號？<Text style={styles.linkHighlight}>註冊</Text>
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        <Text style={styles.linkText}>
+          還沒有帳號？<Text style={styles.linkHighlight}>註冊</Text>
+        </Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 }
 
