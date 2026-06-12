@@ -10,16 +10,16 @@
     <title>TripPlanner — 自助旅行神隊友</title>
 
     <!-- PWA -->
-    <link rel="manifest" href="manifest.json" />
+    <link rel="manifest" href="/TripPlanner/manifest.json" />
     <meta name="theme-color" content="#2F6FED" />
-    <link rel="icon" type="image/png" href="icon-192.png" />
+    <link rel="icon" type="image/png" href="/TripPlanner/icon-192.png" />
 
     <!-- iOS 加入主畫面 -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="TripPlanner" />
-    <link rel="apple-touch-icon" href="icon-180.png" />
+    <link rel="apple-touch-icon" href="/TripPlanner/icon-180.png" />
 
     <!-- react-native-web 建議的樣式 reset -->
     <style id="expo-reset">
@@ -47,7 +47,7 @@
       // 註冊 service worker（離線快取 app shell）；本機開發不註冊以免快取干擾
       if ('serviceWorker' in navigator && location.hostname !== 'localhost') {
         window.addEventListener('load', function () {
-          navigator.serviceWorker.register('sw.js');
+          navigator.serviceWorker.register('/TripPlanner/sw.js');
         });
       }
     </script>

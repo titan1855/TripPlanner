@@ -2,8 +2,8 @@
   "name": "TripPlanner — 自助旅行神隊友",
   "short_name": "TripPlanner",
   "description": "口袋名單收集、分天排程、旅途中今日模式的自助旅行規劃 APP",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "/TripPlanner/",
+  "scope": "/TripPlanner/",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#2F6FED",
@@ -11,19 +11,19 @@
   "lang": "zh-Hant",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "/TripPlanner/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "/TripPlanner/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "/TripPlanner/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
