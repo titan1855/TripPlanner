@@ -27,3 +27,36 @@ export function accommodationForDate(
     ) ?? null
   );
 }
+
+export type AccommodationInput = Omit<Accommodation, 'id' | 'created_at'>;
+
+export async function createAccommodation(
+  input: Partial<AccommodationInput> & { trip_id: string; name: string }
+): Promise<Accommodation> {
+  const { data, error } = await supabase
+    .from('accommodations')
+    .insert(input)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateAccommodation(
+  id: string,
+  patch: Partial<AccommodationInput>
+): Promise<Accommodation> {
+  const { data, error } = await supabase
+    .from('accommodations')
+    .update(patch)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteAccommodation(id: string): Promise<void> {
+  const { error } = await supabase.from('accommodations').delete().eq('id', id);
+  if (error) throw error;
+}
