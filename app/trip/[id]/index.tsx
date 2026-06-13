@@ -89,11 +89,7 @@ export default function TripDashboardScreen() {
   }
 
   function openQuickEntry(key: string) {
-    if (key === 'pocket') {
-      router.push(`/trip/${id}/pocket`);
-    } else {
-      appAlert('開發中', '這個功能在 Phase 3 推出');
-    }
+    router.push(`/trip/${id}/${key}`);
   }
 
   if (!trip) {

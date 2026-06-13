@@ -52,6 +52,10 @@ export default function RootLayout() {
         <Stack.Screen name="trip/[id]/pocket" options={{ title: '口袋名單' }} />
         <Stack.Screen name="trip/[id]/schedule" options={{ title: '分天排程' }} />
         <Stack.Screen name="trip/[id]/spot/[spotId]" options={{ title: '景點詳情' }} />
+        <Stack.Screen name="trip/[id]/accommodations" options={{ title: '住宿管理' }} />
+        <Stack.Screen name="trip/[id]/tickets" options={{ title: '票券總覽' }} />
+        <Stack.Screen name="trip/[id]/checklist" options={{ title: '行前檢查表' }} />
+        <Stack.Screen name="trip/[id]/members" options={{ title: '旅伴' }} />
       </Stack>
     </View>
   );
