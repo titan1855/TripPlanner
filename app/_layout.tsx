@@ -1,6 +1,8 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import React, { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ErrorBoundary } from '../src/components/ErrorBoundary';
+import { InstallPrompt } from '../src/components/ui/InstallPrompt';
 import { useAuthStore } from '../src/store/auth';
 import { COLORS } from '../src/utils/constants';
 
@@ -35,29 +37,32 @@ export default function RootLayout() {
   }
 
   return (
-    <View style={styles.flex}>
-      <Stack
-        screenOptions={{
-          headerTintColor: COLORS.primary,
-          headerTitleStyle: { color: COLORS.text },
-          contentStyle: { backgroundColor: COLORS.background },
-        }}
-      >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="auth/login" options={{ headerShown: false }} />
-        <Stack.Screen name="auth/register" options={{ headerShown: false }} />
-        <Stack.Screen name="trip/new" options={{ title: '建立行程', presentation: 'modal' }} />
-        <Stack.Screen name="trip/[id]/index" options={{ title: '行程總覽' }} />
-        <Stack.Screen name="trip/[id]/edit" options={{ title: '編輯行程', presentation: 'modal' }} />
-        <Stack.Screen name="trip/[id]/pocket" options={{ title: '口袋名單' }} />
-        <Stack.Screen name="trip/[id]/schedule" options={{ title: '分天排程' }} />
-        <Stack.Screen name="trip/[id]/spot/[spotId]" options={{ title: '景點詳情' }} />
-        <Stack.Screen name="trip/[id]/accommodations" options={{ title: '住宿管理' }} />
-        <Stack.Screen name="trip/[id]/tickets" options={{ title: '票券總覽' }} />
-        <Stack.Screen name="trip/[id]/checklist" options={{ title: '行前檢查表' }} />
-        <Stack.Screen name="trip/[id]/members" options={{ title: '旅伴' }} />
-      </Stack>
-    </View>
+    <ErrorBoundary>
+      <View style={styles.flex}>
+        {session ? <InstallPrompt /> : null}
+        <Stack
+          screenOptions={{
+            headerTintColor: COLORS.primary,
+            headerTitleStyle: { color: COLORS.text },
+            contentStyle: { backgroundColor: COLORS.background },
+          }}
+        >
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="auth/login" options={{ headerShown: false }} />
+          <Stack.Screen name="auth/register" options={{ headerShown: false }} />
+          <Stack.Screen name="trip/new" options={{ title: '建立行程', presentation: 'modal' }} />
+          <Stack.Screen name="trip/[id]/index" options={{ title: '行程總覽' }} />
+          <Stack.Screen name="trip/[id]/edit" options={{ title: '編輯行程', presentation: 'modal' }} />
+          <Stack.Screen name="trip/[id]/pocket" options={{ title: '口袋名單' }} />
+          <Stack.Screen name="trip/[id]/schedule" options={{ title: '分天排程' }} />
+          <Stack.Screen name="trip/[id]/spot/[spotId]" options={{ title: '景點詳情' }} />
+          <Stack.Screen name="trip/[id]/accommodations" options={{ title: '住宿管理' }} />
+          <Stack.Screen name="trip/[id]/tickets" options={{ title: '票券總覽' }} />
+          <Stack.Screen name="trip/[id]/checklist" options={{ title: '行前檢查表' }} />
+          <Stack.Screen name="trip/[id]/members" options={{ title: '旅伴' }} />
+        </Stack>
+      </View>
+    </ErrorBoundary>
   );
 }
 

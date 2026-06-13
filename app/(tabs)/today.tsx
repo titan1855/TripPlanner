@@ -13,6 +13,7 @@ import { ActionMenu, type ActionItem } from '../../src/components/today/ActionMe
 import { CurrentSpotCard } from '../../src/components/today/CurrentSpotCard';
 import { TodaySpotRow } from '../../src/components/today/TodaySpotRow';
 import { EmptyState } from '../../src/components/ui/EmptyState';
+import { FadeIn } from '../../src/components/ui/FadeIn';
 import { useTodayTrip } from '../../src/hooks/useTodayTrip';
 import { openGoogleMapsNavigation } from '../../src/lib/navigation';
 import type { Spot } from '../../src/types/database';
@@ -269,13 +270,14 @@ export default function TodayScreen() {
           }
           if (index === currentIndex) {
             return (
-              <CurrentSpotCard
-                key={item.key}
-                spot={spot}
-                onNavigate={() => navigate(spot)}
-                onComplete={() => complete(spot)}
-                onMore={() => setMenuTarget(spot)}
-              />
+              <FadeIn key={item.key}>
+                <CurrentSpotCard
+                  spot={spot}
+                  onNavigate={() => navigate(spot)}
+                  onComplete={() => complete(spot)}
+                  onMore={() => setMenuTarget(spot)}
+                />
+              </FadeIn>
             );
           }
           return (

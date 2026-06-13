@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { TripCard } from '../../src/components/trip/TripCard';
 import { EmptyState } from '../../src/components/ui/EmptyState';
+import { FadeIn } from '../../src/components/ui/FadeIn';
 import { listTrips } from '../../src/services/trips';
 import type { Trip } from '../../src/types/database';
 import { COLORS } from '../../src/utils/constants';
@@ -46,8 +47,10 @@ export default function TripListScreen() {
         keyExtractor={(t) => t.id}
         contentContainerStyle={styles.list}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
-        renderItem={({ item }) => (
-          <TripCard trip={item} onPress={() => router.push(`/trip/${item.id}`)} />
+        renderItem={({ item, index }) => (
+          <FadeIn delay={Math.min(index, 6) * 50}>
+            <TripCard trip={item} onPress={() => router.push(`/trip/${item.id}`)} />
+          </FadeIn>
         )}
         ListEmptyComponent={
           loading ? null : (
