@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Spot } from '../../types/database';
 import { COLORS } from '../../utils/constants';
 import { SpotCard } from './SpotCard';
+import { TransportBar, hasTransportInfo } from './TransportBar';
 
 interface Props {
   spots: Spot[];
@@ -28,6 +29,14 @@ export function AlternativeStack({ spots, onPressSpot, onChoose }: Props) {
           {spots.map((spot) => (
             <View key={spot.id} style={styles.option}>
               <SpotCard spot={spot} onPress={() => onPressSpot(spot)} />
+              <Text style={styles.transportCaption}>此案往下一站的交通</Text>
+              {hasTransportInfo(spot) ? (
+                <TransportBar spot={spot} onPress={() => onPressSpot(spot)} />
+              ) : (
+                <Pressable style={styles.addTransport} onPress={() => onPressSpot(spot)}>
+                  <Text style={styles.addTransportText}>┊ ＋ 交通</Text>
+                </Pressable>
+              )}
               <Pressable
                 style={({ pressed }) => [styles.chooseButton, pressed && { opacity: 0.8 }]}
                 onPress={() => onChoose(spot)}
@@ -73,9 +82,22 @@ const styles = StyleSheet.create({
   headerText: { fontSize: 13, fontWeight: '700', color: COLORS.warning },
   expandIcon: { fontSize: 12, color: COLORS.textSecondary },
   options: { gap: 4 },
-  option: { marginBottom: 8 },
-  chooseButton: {
+  option: {
+    marginBottom: 10,
+    paddingBottom: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: COLORS.border,
+  },
+  transportCaption: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    paddingLeft: 18,
     marginTop: 4,
+  },
+  addTransport: { paddingLeft: 18, paddingVertical: 2 },
+  addTransportText: { fontSize: 12, color: COLORS.border },
+  chooseButton: {
+    marginTop: 6,
     height: 36,
     borderRadius: 10,
     backgroundColor: COLORS.success,
