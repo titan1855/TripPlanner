@@ -1,5 +1,5 @@
 import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -18,10 +18,10 @@ import {
 } from '../../../src/services/accommodations';
 import { countUrgentTodos } from '../../../src/services/checklist';
 import { listDays } from '../../../src/services/days';
-import { countPocketSpots } from '../../../src/services/spots';
+import { listSpots } from '../../../src/services/spots';
 import { countUnbookedRequired } from '../../../src/services/tickets';
 import { getTrip, updateTrip } from '../../../src/services/trips';
-import type { Accommodation, Trip, TripDay } from '../../../src/types/database';
+import type { Accommodation, Spot, Trip, TripDay } from '../../../src/types/database';
 import type { TripStatus } from '../../../src/types/enums';
 import {
   COLORS,
@@ -45,6 +45,7 @@ export default function TripDashboardScreen() {
   const router = useRouter();
   const [trip, setTrip] = useState<Trip | null>(null);
   const [days, setDays] = useState<TripDay[]>([]);
+  const [spots, setSpots] = useState<Spot[]>([]);
   const [accommodations, setAccommodations] = useState<Accommodation[]>([]);
   const [pocketCount, setPocketCount] = useState(0);
   const [ticketAlertCount, setTicketAlertCount] = useState(0);
@@ -52,24 +53,48 @@ export default function TripDashboardScreen() {
 
   const load = useCallback(async () => {
     try {
-      const [t, d, a, pocket, tickets, checklist] = await Promise.all([
+      const [t, d, allSpots, a, tickets, checklist] = await Promise.all([
         getTrip(id),
         listDays(id),
+        listSpots(id),
         listAccommodations(id),
-        countPocketSpots(id),
         countUnbookedRequired(id),
         countUrgentTodos(id),
       ]);
       setTrip(t);
       setDays(d);
+      setSpots(allSpots);
       setAccommodations(a);
-      setPocketCount(pocket);
+      setPocketCount(allSpots.filter((s) => s.trip_day_id === null).length);
       setTicketAlertCount(tickets);
       setChecklistAlertCount(checklist);
     } catch (e: any) {
       appAlert('載入失敗', e.message ?? '請稍後再試');
     }
   }, [id]);
+
+  // 每天已排入的景點摘要（區分候選組只算一個「組」）
+  const daySummaries = useMemo(() => {
+    const map = new Map<string, { count: number; names: string[] }>();
+    for (const day of days) {
+      const daySpots = spots
+        .filter((s) => s.trip_day_id === day.id)
+        .sort((a, b) => a.sort_order - b.sort_order);
+      const groups = new Set<string>();
+      let count = 0;
+      const names: string[] = [];
+      for (const s of daySpots) {
+        if (s.alternative_group) {
+          if (groups.has(s.alternative_group)) continue;
+          groups.add(s.alternative_group);
+        }
+        count += 1;
+        if (names.length < 3) names.push(s.name);
+      }
+      map.set(day.id, { count, names });
+    }
+    return map;
+  }, [days, spots]);
 
   useFocusEffect(
     useCallback(() => {
@@ -172,6 +197,8 @@ export default function TripDashboardScreen() {
           <DayOverviewRow
             key={day.id}
             day={day}
+            spotCount={daySummaries.get(day.id)?.count ?? 0}
+            spotNames={daySummaries.get(day.id)?.names ?? []}
             accommodationName={accommodationForDate(accommodations, day.date)?.name}
             onPress={() =>
               router.push({

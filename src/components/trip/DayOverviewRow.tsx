@@ -6,12 +6,22 @@ import { formatDateLabel } from '../../utils/date';
 
 interface Props {
   day: TripDay;
+  /** 已排入這天的景點數（候選組算一個） */
+  spotCount?: number;
+  /** 前幾個景點名稱，供未填區域摘要時顯示 */
+  spotNames?: string[];
   /** 由 accommodations 日期區間對應出的當晚住宿名稱 */
   accommodationName?: string | null;
   onPress: () => void;
 }
 
-export function DayOverviewRow({ day, accommodationName, onPress }: Props) {
+export function DayOverviewRow({
+  day,
+  spotCount = 0,
+  spotNames = [],
+  accommodationName,
+  onPress,
+}: Props) {
   return (
     <Pressable
       onPress={onPress}
@@ -26,9 +36,17 @@ export function DayOverviewRow({ day, accommodationName, onPress }: Props) {
           <Text style={styles.area} numberOfLines={1}>
             {day.area_summary}
           </Text>
+        ) : spotCount > 0 ? (
+          <Text style={styles.area} numberOfLines={1}>
+            {spotNames.join('、')}
+            {spotCount > spotNames.length ? ` 等 ${spotCount} 個景點` : ''}
+          </Text>
         ) : (
           <Text style={styles.placeholder}>尚未規劃</Text>
         )}
+        {day.area_summary && spotCount > 0 ? (
+          <Text style={styles.spotCount}>{spotCount} 個景點</Text>
+        ) : null}
         {day.highlight ? (
           <Text style={styles.highlight} numberOfLines={1}>
             ★ {day.highlight}
@@ -61,6 +79,7 @@ const styles = StyleSheet.create({
   date: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
   infoCol: { flex: 1, marginLeft: 8 },
   area: { fontSize: 15, fontWeight: '600', color: COLORS.text },
+  spotCount: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
   placeholder: { fontSize: 14, color: COLORS.border },
   highlight: { fontSize: 13, color: COLORS.warning, marginTop: 2 },
   hotel: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
