@@ -1,0 +1,35 @@
+name: Keep Actions Enabled
+
+# 目的：GitHub 會在 repo「連續 60 天沒有真人 commit」後自動停用排程 workflow，
+# 導致 keepalive.yml（Supabase 保活）也跟著停。
+#
+# 這個 workflow 每月 1 號與 15 號各推一個空 commit（最大間隔約 16 天，遠小於 60 天），
+# 重置那條 60 天計時，讓排程永遠不被停用。
+#
+# 關鍵：必須用 PAT（個人存取權杖）推送，commit 才會被算成「真人活動」。
+#       內建的 GITHUB_TOKEN 推的 commit 不算，無法重置計時。
+#       PAT 存在 repo secret，名稱為 KEEPALIVE_PAT。
+
+on:
+  schedule:
+    - cron: "0 5 1,15 * *" # 每月 1 號與 15 號 05:00 UTC
+  workflow_dispatch: # 可手動觸發測試
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout (using PAT so the push counts as user activity)
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.KEEPALIVE_PAT }}
+
+      - name: Push empty commit
+        run: |
+          git config user.name "TripPlanner Keepalive"
+          git config user.email "keepalive@users.noreply.github.com"
+          # [skip ci] 讓這個空 commit 不會觸發 deploy.yml 做無謂的重新部署
+          git commit --allow-empty -m "chore: keepalive bump [skip ci]"
+          git push
