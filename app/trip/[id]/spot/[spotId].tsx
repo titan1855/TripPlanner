@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -23,7 +24,9 @@ import {
   updateSpot,
 } from '../../../../src/services/spots';
 import { getTrip } from '../../../../src/services/trips';
-import type { Spot, TripDay } from '../../../../src/types/database';
+import type { Spot, TransportLeg, TripDay } from '../../../../src/types/database';
+import { emptyTransportLeg } from '../../../../src/types/database';
+import { legHasContent } from '../../../../src/lib/transport';
 import type {
   BookingStatus,
   SpotCategory,
@@ -62,6 +65,24 @@ const TRANSPORT_OPTIONS = (Object.keys(TRANSPORT_MODE_LABEL) as TransportMode[])
   (m) => ({ value: m, label: TRANSPORT_MODE_LABEL[m], emoji: TRANSPORT_MODE_EMOJI[m] })
 );
 
+/** 儲存前清理：trim 字串、空字串轉 null、丟掉全空的段 */
+function normalizeLegs(legs: TransportLeg[]): TransportLeg[] {
+  return legs
+    .map((l) => ({
+      mode: l.mode,
+      line: l.line?.trim() || null,
+      departures: l.departures?.trim() || null,
+      board_at: l.board_at?.trim() || null,
+      alight_at: l.alight_at?.trim() || null,
+      minutes: l.minutes,
+      frequency_note: l.frequency_note?.trim() || null,
+      booking_status: l.booking_status,
+      cost_per_person: l.cost_per_person,
+      notes: l.notes?.trim() || null,
+    }))
+    .filter(legHasContent);
+}
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <View style={styles.section}>
@@ -93,16 +114,7 @@ export default function SpotDetailScreen() {
   const [openingHoursNote, setOpeningHoursNote] = useState('');
   const [estCost, setEstCost] = useState('');
   const [costCurrency, setCostCurrency] = useState('');
-  const [tMode, setTMode] = useState<TransportMode | null>(null);
-  const [tLine, setTLine] = useState('');
-  const [tDepartures, setTDepartures] = useState('');
-  const [tBoardAt, setTBoardAt] = useState('');
-  const [tAlightAt, setTAlightAt] = useState('');
-  const [tMinutes, setTMinutes] = useState('');
-  const [tFrequencyNote, setTFrequencyNote] = useState('');
-  const [tBookingStatus, setTBookingStatus] = useState<BookingStatus | null>(null);
-  const [tCost, setTCost] = useState('');
-  const [tNotes, setTNotes] = useState('');
+  const [legs, setLegs] = useState<TransportLeg[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -127,18 +139,7 @@ export default function SpotDetailScreen() {
         setOpeningHoursNote(s.opening_hours_note ?? '');
         setEstCost(s.est_cost_per_person != null ? String(s.est_cost_per_person) : '');
         setCostCurrency(s.cost_currency ?? '');
-        setTMode(s.transport_mode);
-        setTLine(s.transport_line ?? '');
-        setTDepartures(s.transport_departures ?? '');
-        setTBoardAt(s.transport_board_at ?? '');
-        setTAlightAt(s.transport_alight_at ?? '');
-        setTMinutes(s.transport_minutes != null ? String(s.transport_minutes) : '');
-        setTFrequencyNote(s.transport_frequency_note ?? '');
-        setTBookingStatus(s.transport_booking_status);
-        setTCost(
-          s.transport_cost_per_person != null ? String(s.transport_cost_per_person) : ''
-        );
-        setTNotes(s.transport_notes ?? '');
+        setLegs(s.transport_legs ?? []);
       } catch (e: any) {
         appAlert('載入失敗', e.message ?? '請稍後再試');
       }
@@ -148,6 +149,25 @@ export default function SpotDetailScreen() {
   function parseNumber(text: string): number | null {
     const n = parseFloat(text.replace(/,/g, ''));
     return Number.isFinite(n) ? n : null;
+  }
+
+  function updateLeg(index: number, patch: Partial<TransportLeg>) {
+    setLegs((prev) => prev.map((l, i) => (i === index ? { ...l, ...patch } : l)));
+  }
+  function addLeg() {
+    setLegs((prev) => [...prev, emptyTransportLeg()]);
+  }
+  function removeLeg(index: number) {
+    setLegs((prev) => prev.filter((_, i) => i !== index));
+  }
+  function moveLeg(index: number, dir: -1 | 1) {
+    setLegs((prev) => {
+      const next = [...prev];
+      const target = index + dir;
+      if (target < 0 || target >= next.length) return prev;
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
   }
 
   async function handleSave() {
@@ -171,16 +191,7 @@ export default function SpotDetailScreen() {
         opening_hours_note: openingHoursNote.trim() || null,
         est_cost_per_person: parseNumber(estCost),
         cost_currency: costCurrency.trim() || null,
-        transport_mode: tMode,
-        transport_line: tLine.trim() || null,
-        transport_departures: tDepartures.trim() || null,
-        transport_board_at: tBoardAt.trim() || null,
-        transport_alight_at: tAlightAt.trim() || null,
-        transport_minutes: tMinutes ? Math.round(parseNumber(tMinutes) ?? 0) : null,
-        transport_frequency_note: tFrequencyNote.trim() || null,
-        transport_booking_status: tBookingStatus,
-        transport_cost_per_person: parseNumber(tCost),
-        transport_notes: tNotes.trim() || null,
+        transport_legs: normalizeLegs(legs),
       });
       router.back();
     } catch (e: any) {
@@ -339,80 +350,137 @@ export default function SpotDetailScreen() {
         </Section>
 
         <Section title="到下一站的交通（皆選填）">
-          <Text style={styles.fieldLabel}>交通方式</Text>
-          <Chips
-            options={TRANSPORT_OPTIONS}
-            value={tMode}
-            onChange={setTMode}
-            allowDeselect
-            onDeselect={() => setTMode(null)}
-          />
-          <View style={styles.spacer} />
-          <Input
-            label="路線名"
-            value={tLine}
-            onChangeText={setTLine}
-            placeholder="例：東海道本線、江之島電鐵"
-          />
-          <Input
-            label="候選班次"
-            value={tDepartures}
-            onChangeText={setTDepartures}
-            placeholder="例：09:03 / 09:16 / 09:31"
-          />
-          <View style={styles.timeRow}>
-            <View style={styles.half}>
-              <Input label="上車站" value={tBoardAt} onChangeText={setTBoardAt} />
-            </View>
-            <View style={styles.half}>
-              <Input label="下車站" value={tAlightAt} onChangeText={setTAlightAt} />
-            </View>
-          </View>
-          <View style={styles.timeRow}>
-            <View style={styles.half}>
+          <Text style={styles.transportHint}>
+            有轉乘時，每換一種交通工具就新增一段（如：步行 → 地鐵 → 轉另一線）。
+          </Text>
+          {legs.length === 0 ? (
+            <Text style={styles.emptyLegs}>尚未填寫交通段</Text>
+          ) : null}
+          {legs.map((leg, i) => (
+            <View key={i} style={styles.legCard}>
+              <View style={styles.legHeader}>
+                <Text style={styles.legTitle}>第 {i + 1} 段</Text>
+                <View style={styles.legActions}>
+                  <Pressable
+                    onPress={() => moveLeg(i, -1)}
+                    disabled={i === 0}
+                    style={styles.legBtn}
+                  >
+                    <Text style={[styles.legBtnText, i === 0 && styles.legBtnDisabled]}>
+                      ↑
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => moveLeg(i, 1)}
+                    disabled={i === legs.length - 1}
+                    style={styles.legBtn}
+                  >
+                    <Text
+                      style={[
+                        styles.legBtnText,
+                        i === legs.length - 1 && styles.legBtnDisabled,
+                      ]}
+                    >
+                      ↓
+                    </Text>
+                  </Pressable>
+                  <Pressable onPress={() => removeLeg(i)} style={styles.legBtn}>
+                    <Text style={[styles.legBtnText, styles.legBtnDelete]}>✕</Text>
+                  </Pressable>
+                </View>
+              </View>
+              <Text style={styles.fieldLabel}>交通方式</Text>
+              <Chips
+                options={TRANSPORT_OPTIONS}
+                value={leg.mode}
+                onChange={(v) => updateLeg(i, { mode: v })}
+                allowDeselect
+                onDeselect={() => updateLeg(i, { mode: null })}
+              />
+              <View style={styles.spacer} />
               <Input
-                label="移動時間（分）"
-                value={tMinutes}
-                onChangeText={setTMinutes}
-                keyboardType="number-pad"
-                placeholder="35"
+                label="路線名"
+                value={leg.line ?? ''}
+                onChangeText={(v) => updateLeg(i, { line: v })}
+                placeholder="例：東海道本線、江之島電鐵"
+              />
+              <Input
+                label="候選班次"
+                value={leg.departures ?? ''}
+                onChangeText={(v) => updateLeg(i, { departures: v })}
+                placeholder="例：09:03 / 09:16 / 09:31"
+              />
+              <View style={styles.timeRow}>
+                <View style={styles.half}>
+                  <Input
+                    label="上車站"
+                    value={leg.board_at ?? ''}
+                    onChangeText={(v) => updateLeg(i, { board_at: v })}
+                  />
+                </View>
+                <View style={styles.half}>
+                  <Input
+                    label="下車站"
+                    value={leg.alight_at ?? ''}
+                    onChangeText={(v) => updateLeg(i, { alight_at: v })}
+                  />
+                </View>
+              </View>
+              <View style={styles.timeRow}>
+                <View style={styles.half}>
+                  <Input
+                    label="移動時間（分）"
+                    value={leg.minutes != null ? String(leg.minutes) : ''}
+                    onChangeText={(v) => {
+                      const n = parseNumber(v);
+                      updateLeg(i, { minutes: n != null ? Math.round(n) : null });
+                    }}
+                    keyboardType="number-pad"
+                    placeholder="35"
+                  />
+                </View>
+                <View style={styles.half}>
+                  <Input
+                    label="班距備註"
+                    value={leg.frequency_note ?? ''}
+                    onChangeText={(v) => updateLeg(i, { frequency_note: v })}
+                    placeholder="每 15 分一班"
+                  />
+                </View>
+              </View>
+              <Text style={styles.fieldLabel}>購票狀態</Text>
+              <Chips
+                options={BOOKING_OPTIONS}
+                value={leg.booking_status}
+                onChange={(v) => updateLeg(i, { booking_status: v })}
+                allowDeselect
+                onDeselect={() => updateLeg(i, { booking_status: null })}
+              />
+              <View style={styles.spacer} />
+              <View style={styles.costRow}>
+                <View style={styles.costField}>
+                  <Input
+                    label="交通費 / 人"
+                    value={leg.cost_per_person != null ? String(leg.cost_per_person) : ''}
+                    onChangeText={(v) => updateLeg(i, { cost_per_person: parseNumber(v) })}
+                    keyboardType="decimal-pad"
+                  />
+                </View>
+              </View>
+              <Input
+                label="此段備註"
+                value={leg.notes ?? ''}
+                onChangeText={(v) => updateLeg(i, { notes: v })}
+                placeholder="例：往渋谷方向月台、車尾車廂較空"
+                multiline
+                style={styles.multiline}
               />
             </View>
-            <View style={styles.half}>
-              <Input
-                label="班距備註"
-                value={tFrequencyNote}
-                onChangeText={setTFrequencyNote}
-                placeholder="每 15 分一班"
-              />
-            </View>
-          </View>
-          <Text style={styles.fieldLabel}>購票狀態</Text>
-          <Chips
-            options={BOOKING_OPTIONS}
-            value={tBookingStatus}
-            onChange={setTBookingStatus}
-            allowDeselect
-            onDeselect={() => setTBookingStatus(null)}
-          />
-          <View style={styles.spacer} />
-          <View style={styles.costRow}>
-            <View style={styles.costField}>
-              <Input
-                label="交通費 / 人"
-                value={tCost}
-                onChangeText={setTCost}
-                keyboardType="decimal-pad"
-              />
-            </View>
-          </View>
-          <Input
-            label="轉乘說明"
-            value={tNotes}
-            onChangeText={setTNotes}
-            placeholder="例：淺草線到人形町轉日比谷線"
-            multiline
-            style={styles.multiline}
+          ))}
+          <Button
+            title="＋ 新增交通段"
+            variant="secondary"
+            onPress={addLeg}
           />
         </Section>
 
@@ -481,4 +549,33 @@ const styles = StyleSheet.create({
   currencyField: { flex: 1 },
   multiline: { height: 72, paddingTop: 12, textAlignVertical: 'top' },
   dangerZone: { marginTop: 24, gap: 10 },
+  transportHint: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 12 },
+  emptyLegs: { fontSize: 14, color: COLORS.textSecondary, marginBottom: 12 },
+  legCard: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    backgroundColor: COLORS.background,
+  },
+  legHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  legTitle: { fontSize: 14, fontWeight: '700', color: COLORS.text },
+  legActions: { flexDirection: 'row', gap: 4 },
+  legBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.card,
+  },
+  legBtnText: { fontSize: 16, color: COLORS.text, fontWeight: '700' },
+  legBtnDisabled: { color: COLORS.border },
+  legBtnDelete: { color: COLORS.danger },
 });

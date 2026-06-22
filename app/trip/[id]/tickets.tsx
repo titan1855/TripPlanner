@@ -8,6 +8,7 @@ import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { Input } from '../../../src/components/ui/Input';
 import { SheetModal } from '../../../src/components/ui/SheetModal';
 import { appAlert, appConfirm } from '../../../src/lib/dialog';
+import { transportNeedsBooking } from '../../../src/lib/transport';
 import {
   createTicket,
   deleteTicket,
@@ -103,7 +104,7 @@ export default function TicketsScreen() {
     setTitle(ticket?.title ?? prefillSpot?.name ?? '');
     setTicketType(
       ticket?.ticket_type ??
-        (prefillSpot?.transport_booking_status === 'need_booking'
+        (prefillSpot && transportNeedsBooking(prefillSpot)
           ? 'transport'
           : 'admission')
     );
@@ -179,7 +180,7 @@ export default function TicketsScreen() {
               >
                 <Text style={styles.missingName} numberOfLines={1}>
                   {s.name}
-                  {s.transport_booking_status === 'need_booking' ? '（交通段）' : ''}
+                  {transportNeedsBooking(s) ? '（交通段）' : ''}
                 </Text>
                 <Text style={styles.missingAction}>＋ 補建</Text>
               </Pressable>

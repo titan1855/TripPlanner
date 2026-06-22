@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { transportNeedsBooking } from '../lib/transport';
 import type { Spot, Ticket } from '../types/database';
 
 /** 需預訂但未訂的票券數（總覽頁紅色 badge） */
@@ -64,8 +65,7 @@ export function findMissingTicketSpots(spots: Spot[], tickets: Ticket[]): Spot[]
   const linked = new Set(tickets.map((t) => t.linked_spot_id).filter(Boolean));
   return spots.filter(
     (s) =>
-      (s.booking_status === 'need_booking' ||
-        s.transport_booking_status === 'need_booking') &&
+      (s.booking_status === 'need_booking' || transportNeedsBooking(s)) &&
       !linked.has(s.id)
   );
 }

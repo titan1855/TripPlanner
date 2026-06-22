@@ -74,17 +74,41 @@ export interface Spot {
   est_cost_per_person: number | null;
   cost_currency: string | null;
   notes: string | null;
-  transport_mode: TransportMode | null;
-  transport_line: string | null;
-  transport_departures: string | null;
-  transport_board_at: string | null;
-  transport_alight_at: string | null;
-  transport_minutes: number | null;
-  transport_frequency_note: string | null;
-  transport_booking_status: BookingStatus | null;
-  transport_cost_per_person: number | null;
-  transport_notes: string | null;
+  /**
+   * 到下一站的交通，依序多段（轉乘）。空陣列 = 沒有交通資訊。
+   * 取代舊的扁平 transport_* 欄位（DB 仍保留舊欄位作安全網，但程式只讀寫此欄）。
+   */
+  transport_legs: TransportLeg[];
   created_at: string;
+}
+
+/** 一段交通（多段串起來 = 一趟含轉乘的旅程） */
+export interface TransportLeg {
+  mode: TransportMode | null;
+  line: string | null;
+  departures: string | null;
+  board_at: string | null;
+  alight_at: string | null;
+  minutes: number | null;
+  frequency_note: string | null;
+  booking_status: BookingStatus | null;
+  cost_per_person: number | null;
+  notes: string | null;
+}
+
+export function emptyTransportLeg(): TransportLeg {
+  return {
+    mode: null,
+    line: null,
+    departures: null,
+    board_at: null,
+    alight_at: null,
+    minutes: null,
+    frequency_note: null,
+    booking_status: null,
+    cost_per_person: null,
+    notes: null,
+  };
 }
 
 export interface Accommodation {

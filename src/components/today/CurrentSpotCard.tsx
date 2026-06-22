@@ -1,11 +1,8 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Spot } from '../../types/database';
-import {
-  CATEGORY_EMOJI,
-  COLORS,
-  TRANSPORT_MODE_EMOJI,
-} from '../../utils/constants';
+import { CATEGORY_EMOJI, COLORS } from '../../utils/constants';
+import { legSummary, transportLegs } from '../../lib/transport';
 import { formatTime } from '../../utils/date';
 
 interface Props {
@@ -22,10 +19,7 @@ export function CurrentSpotCard({ spot, onNavigate, onComplete, onMore }: Props)
   const timeLabel =
     arrival && departure ? `${arrival} – ${departure}` : arrival || departure || '';
 
-  const transportParts: string[] = [];
-  if (spot.transport_line) transportParts.push(spot.transport_line);
-  if (spot.transport_departures) transportParts.push(spot.transport_departures);
-  if (spot.transport_minutes != null) transportParts.push(`${spot.transport_minutes} 分`);
+  const legs = transportLegs(spot);
 
   return (
     <View style={styles.card}>
@@ -48,15 +42,17 @@ export function CurrentSpotCard({ spot, onNavigate, onComplete, onMore }: Props)
       ) : null}
       {spot.notes ? <Text style={styles.notes}>{spot.notes}</Text> : null}
 
-      {transportParts.length > 0 ? (
+      {legs.length > 0 ? (
         <View style={styles.transportBox}>
-          <Text style={styles.transportText}>
-            {spot.transport_mode ? `${TRANSPORT_MODE_EMOJI[spot.transport_mode]} ` : '➡️ '}
-            往下一站：{transportParts.join(' ・ ')}
-          </Text>
-          {spot.transport_notes ? (
-            <Text style={styles.transportNote}>{spot.transport_notes}</Text>
-          ) : null}
+          <Text style={styles.transportLabel}>往下一站</Text>
+          {legs.map((leg, i) => (
+            <View key={i}>
+              <Text style={styles.transportText}>{legSummary(leg)}</Text>
+              {leg.notes ? (
+                <Text style={styles.transportNote}>{leg.notes}</Text>
+              ) : null}
+            </View>
+          ))}
         </View>
       ) : null}
 
@@ -116,8 +112,14 @@ const styles = StyleSheet.create({
     padding: 12,
     marginTop: 12,
   },
-  transportText: { fontSize: 14, color: COLORS.text, fontWeight: '600' },
-  transportNote: { fontSize: 13, color: COLORS.textSecondary, marginTop: 4 },
+  transportLabel: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  transportText: { fontSize: 14, color: COLORS.text, fontWeight: '600', marginTop: 4 },
+  transportNote: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
   buttonRow: { flexDirection: 'row', gap: 12, marginTop: 16 },
   navButton: {
     flex: 1,
