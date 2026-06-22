@@ -1,6 +1,7 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,10 +11,16 @@ import { appAlert } from '../../../src/lib/dialog';
 import { DayPickerModal } from '../../../src/components/schedule/DayPickerModal';
 import { PocketItem } from '../../../src/components/pocket/PocketItem';
 import { QuickAddBar } from '../../../src/components/pocket/QuickAddBar';
+import { Button } from '../../../src/components/ui/Button';
 import { Chips } from '../../../src/components/ui/Chips';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { listDays } from '../../../src/services/days';
-import { assignToDay, createSpot, listSpots } from '../../../src/services/spots';
+import {
+  assignAsAlternatives,
+  assignToDay,
+  createSpot,
+  listSpots,
+} from '../../../src/services/spots';
 import type { Spot, TripDay } from '../../../src/types/database';
 import type { SpotCategory, SpotPriority } from '../../../src/types/enums';
 import {
@@ -39,6 +46,25 @@ export default function PocketScreen() {
   const [days, setDays] = useState<TripDay[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<SpotCategory | null>(null);
   const [assigning, setAssigning] = useState<Spot | null>(null);
+  const [multiOn, setMultiOn] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [pickingGroupDay, setPickingGroupDay] = useState(false);
+
+  const multiMode = multiOn || selected.size > 0;
+
+  function toggleSelect(spot: Spot) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(spot.id)) next.delete(spot.id);
+      else next.add(spot.id);
+      return next;
+    });
+  }
+
+  function exitMulti() {
+    setSelected(new Set());
+    setMultiOn(false);
+  }
 
   const load = useCallback(async () => {
     try {
@@ -76,6 +102,19 @@ export default function PocketScreen() {
     }
   }
 
+  async function handleAssignGroup(day: TripDay) {
+    const ids = spots.filter((s) => selected.has(s.id)).map((s) => s.id);
+    if (ids.length < 2) return;
+    try {
+      await assignAsAlternatives(ids, day.id);
+      setPickingGroupDay(false);
+      exitMulti();
+      await load();
+    } catch (e: any) {
+      appAlert('組候選方案失敗', e.message ?? '請稍後再試');
+    }
+  }
+
   const filtered = categoryFilter
     ? spots.filter((s) => s.category === categoryFilter)
     : spots;
@@ -84,6 +123,27 @@ export default function PocketScreen() {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <QuickAddBar onAdd={handleQuickAdd} />
+
+        {spots.length > 0 ? (
+          <View style={styles.toolbar}>
+            <Pressable
+              style={[styles.multiToggle, multiMode && styles.multiToggleOn]}
+              onPress={() => (multiMode ? exitMulti() : setMultiOn(true))}
+            >
+              <Text
+                style={[styles.multiToggleText, multiMode && styles.multiToggleTextOn]}
+              >
+                {multiMode ? '取消多選' : '☑️ 組多選景點'}
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
+        {multiMode ? (
+          <Text style={styles.multiHint}>
+            勾選 2 個以上想替換的地點，組成「候選方案組（N 選 1）」排進某天
+          </Text>
+        ) : null}
+
         <View style={styles.filterRow}>
           <Chips
             options={CATEGORY_OPTIONS}
@@ -122,7 +182,13 @@ export default function PocketScreen() {
                   <PocketItem
                     key={spot.id}
                     spot={spot}
-                    onPress={() => router.push(`/trip/${id}/spot/${spot.id}`)}
+                    selectMode={multiMode}
+                    selected={selected.has(spot.id)}
+                    onPress={() =>
+                      multiMode
+                        ? toggleSelect(spot)
+                        : router.push(`/trip/${id}/spot/${spot.id}`)
+                    }
                     onAssign={() => setAssigning(spot)}
                   />
                 ))}
@@ -132,12 +198,32 @@ export default function PocketScreen() {
         )}
       </ScrollView>
 
+      {multiMode ? (
+        <View style={styles.footer}>
+          <Button
+            title={`組為候選方案組（${selected.size} 選 1）`}
+            onPress={() => setPickingGroupDay(true)}
+            disabled={selected.size < 2}
+          />
+          <Button title="取消多選" variant="ghost" onPress={exitMulti} />
+        </View>
+      ) : null}
+
       <DayPickerModal
-        visible={!!assigning}
+        visible={!!assigning || pickingGroupDay}
         days={days}
-        title={assigning ? `「${assigning.name}」排到哪一天？` : ''}
-        onSelect={handleAssign}
-        onClose={() => setAssigning(null)}
+        title={
+          pickingGroupDay
+            ? `把這 ${selected.size} 個景點組成候選方案，排到哪一天？`
+            : assigning
+            ? `「${assigning.name}」排到哪一天？`
+            : ''
+        }
+        onSelect={pickingGroupDay ? handleAssignGroup : handleAssign}
+        onClose={() => {
+          setAssigning(null);
+          setPickingGroupDay(false);
+        }}
       />
     </View>
   );
@@ -146,7 +232,33 @@ export default function PocketScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   content: { padding: 16, paddingBottom: 48, flexGrow: 1 },
-  filterRow: { marginBottom: 16 },
+  toolbar: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12 },
+  multiToggle: {
+    paddingHorizontal: 10,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    justifyContent: 'center',
+  },
+  multiToggleOn: { borderColor: COLORS.primary, backgroundColor: `${COLORS.primary}14` },
+  multiToggleText: { fontSize: 13, color: COLORS.textSecondary },
+  multiToggleTextOn: { color: COLORS.primary, fontWeight: '600' },
+  multiHint: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginTop: 8,
+    lineHeight: 18,
+  },
+  footer: {
+    padding: 16,
+    paddingTop: 8,
+    gap: 4,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.background,
+  },
+  filterRow: { marginBottom: 16, marginTop: 12 },
   section: { marginBottom: 16 },
   sectionHeader: {
     flexDirection: 'row',

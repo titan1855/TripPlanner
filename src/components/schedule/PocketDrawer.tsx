@@ -99,14 +99,14 @@ export function PocketDrawer({
               }}
             >
               <Text style={[styles.multiToggleText, multiMode && styles.multiToggleTextOn]}>
-                {multiMode ? '取消多選' : '☑️ 多選'}
+                {multiMode ? '取消多選' : '☑️ 組多選景點'}
               </Text>
             </Pressable>
           </View>
           <Text style={styles.hint}>
             {multiMode
               ? '勾選 2 個以上，加入為「候選方案組（N 選 1）」'
-              : '點一下直接加入；按「多選」可把幾個地點綁成候選方案組'}
+              : '點一下直接加入；按「組多選景點」可把幾個地點綁成候選方案組'}
           </Text>
 
           <View style={styles.filters}>

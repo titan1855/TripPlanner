@@ -14,13 +14,26 @@ interface Props {
   spot: Spot;
   onPress: () => void;
   onAssign: () => void;
+  /** 多選模式：onPress 改為切換勾選，右側顯示勾選框而非「排入」 */
+  selectMode?: boolean;
+  selected?: boolean;
 }
 
-export function PocketItem({ spot, onPress, onAssign }: Props) {
+export function PocketItem({
+  spot,
+  onPress,
+  onAssign,
+  selectMode = false,
+  selected = false,
+}: Props) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.row,
+        pressed && styles.pressed,
+        selected && styles.rowSelected,
+      ]}
     >
       <View style={[styles.priorityBar, { backgroundColor: PRIORITY_COLOR[spot.priority] }]} />
       <Text style={styles.emoji}>{CATEGORY_EMOJI[spot.category]}</Text>
@@ -42,9 +55,13 @@ export function PocketItem({ spot, onPress, onAssign }: Props) {
           ) : null}
         </View>
       </View>
-      <Pressable style={styles.assignButton} onPress={onAssign} hitSlop={6}>
-        <Text style={styles.assignText}>排入</Text>
-      </Pressable>
+      {selectMode ? (
+        <Text style={styles.checkbox}>{selected ? '☑️' : '⬜️'}</Text>
+      ) : (
+        <Pressable style={styles.assignButton} onPress={onAssign} hitSlop={6}>
+          <Text style={styles.assignText}>排入</Text>
+        </Pressable>
+      )}
     </Pressable>
   );
 }
@@ -60,6 +77,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   pressed: { opacity: 0.85 },
+  rowSelected: { borderWidth: 1.5, borderColor: COLORS.primary },
+  checkbox: { fontSize: 18, paddingHorizontal: 4 },
   priorityBar: { width: 4, alignSelf: 'stretch' },
   emoji: { fontSize: 20, marginLeft: 10 },
   info: { flex: 1, paddingVertical: 12, paddingHorizontal: 10 },
